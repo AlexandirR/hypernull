@@ -1,6 +1,5 @@
 package ru.croccode.hypernull.statistic;
 
-import ru.croccode.hypernull.match.Match;
 import ru.croccode.hypernull.statistic.DAO.DAOBotInfo;
 import ru.croccode.hypernull.statistic.DAO.DAOMatchInfo;
 import ru.croccode.hypernull.statistic.DAO.DAOMatchTable;
@@ -21,20 +20,80 @@ import java.util.stream.Collectors;
 public class ParseLogs {
 
     private Path path;
+    private List<MatchTable> bots = new ArrayList<>();
+    private Map<Integer, Set<String>> botsFields = new HashMap<>();
+    private MatchInfo matchInfo;
+    DAOMatchInfo daoMatchInfo;
+    DAOBotInfo daoBotInfo;
+    DAOMatchTable daoMatchTable;
 
     public ParseLogs(Path path) {
         this.path = path;
     }
 
-    private void parseIter() {
-
+    private void parseIter(String line) throws SQLException {
+        String[] words = line.split(" ");
+        switch (words[0]) {
+            case "num_bots":
+                bots = new ArrayList<>(Integer.parseInt(words[1]));
+                for(Integer id = 0; id < Integer.parseInt(words[1]); ++id) {
+                    botsFields.put(id, new HashSet<>());
+                }
+                break;
+            case "mode":
+                matchInfo.setMode(words[1]);
+                break;
+            case "bot_name":
+                BotInfo botInfo = daoBotInfo.findBotInfo(words[2]);
+                if(botInfo == null) {
+                    botInfo = daoBotInfo.createBotInfo(new BotInfo(daoBotInfo.newId(), words[2], 0, 0, 0));
+                }
+                if(bots.size() <= Integer.parseInt(words[1])) {
+                    bots.add(Integer.parseInt(words[1]), new MatchTable(matchInfo.getId(), botInfo.getId(), 0, 0, 0, 0));
+                }
+                else {
+                    bots.set(Integer.parseInt(words[1]), new MatchTable(matchInfo.getId(), botInfo.getId(), 0, 0, 0, 0));
+                }
+                break;
+            case "coin":
+                matchInfo.setCoinsSpawn(matchInfo.getCoinsSpawn() + 1);
+                break;
+            case "bot":
+                botsFields.get(Integer.parseInt(words[1])).add(words[2] + words[3]);
+                break;
+            case "coin_collected":
+                bots.get(Integer.parseInt(words[3]))
+                        .setCoins(bots.get(Integer.parseInt(words[3]))
+                                .getCoins() + 1);
+                botInfo = daoBotInfo.findBotInfo(bots.get(Integer.parseInt(words[3])).getIdBot());
+                botInfo.setCoins(botInfo.getCoins() + 1);
+                daoBotInfo.updateBotInfo(botInfo);
+                break;
+            case "attack":
+                matchInfo.setKills(matchInfo.getKills() + 1);
+                MatchTable attackBot =  bots.get(Integer.parseInt(words[1]));
+                MatchTable defBot =  bots.get(Integer.parseInt(words[2]));
+                botInfo = daoBotInfo.findBotInfo(attackBot.getIdBot());
+                botInfo.setCoins(botInfo.getCoins() + attackBot.getCoins() + defBot.getCoins());
+                botInfo.setKills(botInfo.getKills() + 1);
+                daoBotInfo.updateBotInfo(botInfo);
+                attackBot.setCoins(attackBot.getCoins() + defBot.getCoins());
+                attackBot.setKills(attackBot.getKills() + 1);
+                botInfo = daoBotInfo.findBotInfo(defBot.getIdBot());
+                botInfo.setDeath(botInfo.getDeath() + 1);
+                daoBotInfo.updateBotInfo(botInfo);
+                defBot.setDeaths(defBot.getDeaths() + 1);
+                bots.set(Integer.parseInt(words[1]), attackBot);
+                bots.set(Integer.parseInt(words[2]), defBot);
+                break;
+        }
     }
 
     public void parse(Connection connection) throws IOException {
         List<Path> logs = Files.list(path).collect(Collectors.toList());
-        DAOMatchInfo daoMatchInfo = new DAOMatchInfo(connection);
-        DAOBotInfo daoBotInfo = new DAOBotInfo(connection);
-        DAOMatchTable daoMatchTable = new DAOMatchTable(connection);
+        daoMatchInfo = new DAOMatchInfo(connection);
+        daoBotInfo = new DAOBotInfo(connection);
+        daoMatchTable = new DAOMatchTable(connection);
         for(Path pathIt : logs) {
             try(BufferedReader reader = new BufferedReader(
                     new FileReader(pathIt.getParent().toString() + "\\" + pathIt.getFileName().toString()))) {
@@ -45,65 +104,9 @@ public class ParseLogs {
                     continue;
                 }
                 line = reader.readLine();
-                List<MatchTable> bots = new ArrayList<>();
-                Map<Integer, Set<String>> botsFields = new HashMap<>();
                 MatchInfo matchInfo = new MatchInfo(matchId, 0, "", 0);
                 while (line != null) {
-                    String[] words = line.split(" ");
-                    switch (words[0]) {
-                        case "num_bots":
-                            bots = new ArrayList<>(Integer.parseInt(words[1]));
-                            for(Integer id = 0; id < Integer.parseInt(words[1]); ++id) {
-                                botsFields.put(id, new HashSet<>());
-                            }
-                            break;
-                        case "mode":
-                            matchInfo.setMode(words[1]);
-                            break;
-                        case "bot_name":
-                            BotInfo botInfo = daoBotInfo.findBotInfo(words[2]);
-                            if(botInfo == null) {
-                                botInfo = daoBotInfo.createBotInfo(new BotInfo(daoBotInfo.newId(), words[2], 0, 0, 0));
-                            }
-                            if(bots.size() <= Integer.parseInt(words[1])) {
-                                bots.add(Integer.parseInt(words[1]), new MatchTable(matchId, botInfo.getId(), 0, 0, 0, 0));
-                            }
-                            else {
-                                bots.set(Integer.parseInt(words[1]), new MatchTable(matchId, botInfo.getId(), 0, 0, 0, 0));
-                            }
-                            break;
-                        case "coin":
-                            matchInfo.setCoinsSpawn(matchInfo.getCoinsSpawn() + 1);
-                            break;
-                        case "bot":
-                            botsFields.get(Integer.parseInt(words[1])).add(words[2] + words[3]);
-                            break;
-                        case "coin_collected":
-                            bots.get(Integer.parseInt(words[3]))
-                                    .setCoins(bots.get(Integer.parseInt(words[3]))
-                                            .getCoins() + 1);
-                            botInfo = daoBotInfo.findBotInfo(bots.get(Integer.parseInt(words[3])).getIdBot());
-                            botInfo.setCoins(botInfo.getCoins() + 1);
-                            daoBotInfo.updateBotInfo(botInfo);
-                            break;
-                        case "attack":
-                            matchInfo.setKills(matchInfo.getKills() + 1);
-                            MatchTable attackBot =  bots.get(Integer.parseInt(words[1]));
-                            MatchTable defBot =  bots.get(Integer.parseInt(words[2]));
-                            botInfo = daoBotInfo.findBotInfo(attackBot.getIdBot());
-                            botInfo.setCoins(botInfo.getCoins() + attackBot.getCoins() + defBot.getCoins());
-                            botInfo.setKills(botInfo.getKills() + 1);
-                            daoBotInfo.updateBotInfo(botInfo);
-                            attackBot.setCoins(attackBot.getCoins() + defBot.getCoins());
-                            attackBot.setKills(attackBot.getKills() + 1);
-                            botInfo = daoBotInfo.findBotInfo(defBot.getIdBot());
-                            botInfo.setDeath(botInfo.getDeath() + 1);
-                            daoBotInfo.updateBotInfo(botInfo);
-                            defBot.setDeaths(defBot.getDeaths() + 1);
-                            bots.set(Integer.parseInt(words[1]), attackBot);
-                            bots.set(Integer.parseInt(words[2]), defBot);
-                            break;
-                    }
+                    parseIter(line);
                     line = reader.readLine();
                 }
                 daoMatchInfo.createMatchInfo(matchInfo);
