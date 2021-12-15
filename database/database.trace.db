@@ -1,0 +1,115 @@
+2021-12-14 18:47:14 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Таблица "MATCHINFO" уже существует
+Table "MATCHINFO" already exists; SQL statement:
+CREATE TABLE MatchInfo(
+id INT PRIMARY KEY, 
+coinsSpawn INT NOT NULL,
+mode VARCHAR(255) NOT NULL, 
+kills INT) [42101-202]
+2021-12-14 18:47:14 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Таблица "BOTINFO" уже существует
+Table "BOTINFO" already exists; SQL statement:
+CREATE TABLE BotInfo(
+id INT PRIMARY KEY, 
+name VARCHAR(255) NOT NULL, 
+coins INT, 
+kills INT, 
+deaths INT, 
+percentOpen REAL) [42101-202]
+2021-12-14 18:47:14 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Таблица "MATCHTABLE" уже существует
+Table "MATCHTABLE" already exists; SQL statement:
+CREATE TABLE MatchTable(
+idMatch INT NOT NULL, 
+idBot INT NOT NULL, 
+coins INT NOT NULL, 
+kills INT, 
+deaths INT, fieldsOpen INT, 
+FOREIGN KEY (idMatch) REFERENCES MatchInfo(id),
+FOREIGN KEY (idBot) REFERENCES BotInfo(id)) [42101-202]
+2021-12-14 18:47:14 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Синтаксическая ошибка в выражении SQL "SELECT * FROM MATCHTABLE WHERE IDMATCH=1,[*] IDBOT = 1"
+Syntax error in SQL statement "SELECT * FROM MATCHTABLE WHERE IDMATCH=1,[*] IDBOT = 1"; SQL statement:
+SELECT * FROM MatchTable WHERE idMatch=1, idBot = 1 [42000-202]
+2021-12-14 21:52:15 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Невозможно удалить "MATCHINFO", пока существует зависимый объект "CONSTRAINT_8"
+Cannot drop "MATCHINFO" because "CONSTRAINT_8" depends on it; SQL statement:
+DROP TABLE MatchInfo [90107-202]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:632)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:477)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.command.ddl.DropTable.prepareDrop(DropTable.java:98)
+	at org.h2.command.ddl.DropTable.update(DropTable.java:123)
+	at org.h2.command.CommandContainer.update(CommandContainer.java:173)
+	at org.h2.command.Command.executeUpdate(Command.java:247)
+	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:252)
+	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:223)
+	at org.h2.server.web.WebApp.getResult(WebApp.java:1335)
+	at org.h2.server.web.WebApp.query(WebApp.java:1133)
+	at org.h2.server.web.WebApp$1.next(WebApp.java:1099)
+	at org.h2.server.web.WebApp$1.next(WebApp.java:1086)
+	at org.h2.server.web.WebThread.process(WebThread.java:178)
+	at org.h2.server.web.WebThread.run(WebThread.java:94)
+	at java.lang.Thread.run(Unknown Source)
+2021-12-14 21:52:15 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Невозможно удалить "BOTINFO", пока существует зависимый объект "CONSTRAINT_8D"
+Cannot drop "BOTINFO" because "CONSTRAINT_8D" depends on it; SQL statement:
+DROP TABLE BotInfo [90107-202]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:632)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:477)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.command.ddl.DropTable.prepareDrop(DropTable.java:98)
+	at org.h2.command.ddl.DropTable.update(DropTable.java:123)
+	at org.h2.command.CommandContainer.update(CommandContainer.java:173)
+	at org.h2.command.Command.executeUpdate(Command.java:247)
+	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:252)
+	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:223)
+	at org.h2.server.web.WebApp.getResult(WebApp.java:1335)
+	at org.h2.server.web.WebApp.query(WebApp.java:1133)
+	at org.h2.server.web.WebApp$1.next(WebApp.java:1099)
+	at org.h2.server.web.WebApp$1.next(WebApp.java:1086)
+	at org.h2.server.web.WebThread.process(WebThread.java:178)
+	at org.h2.server.web.WebThread.run(WebThread.java:94)
+	at java.lang.Thread.run(Unknown Source)
+2021-12-14 23:31:17 jdbc[5]: null
+org.h2.message.DbException: Незакрытое приложением соединение уничтожено сборщиком мусора
+The connection was not closed by the application and is garbage collected [90018-202]
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.message.DbException.get(DbException.java:188)
+	at org.h2.jdbc.JdbcConnection.closeOld(JdbcConnection.java:185)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:127)
+	at org.h2.util.JdbcUtils.getConnection(JdbcUtils.java:287)
+	at org.h2.server.web.WebServer.getConnection(WebServer.java:785)
+	at org.h2.server.web.WebApp.login(WebApp.java:1029)
+	at org.h2.server.web.WebApp.process(WebApp.java:226)
+	at org.h2.server.web.WebApp.processRequest(WebApp.java:176)
+	at org.h2.server.web.WebThread.process(WebThread.java:139)
+	at org.h2.server.web.WebThread.run(WebThread.java:94)
+	at java.lang.Thread.run(Unknown Source)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: Незакрытое приложением соединение уничтожено сборщиком мусора
+The connection was not closed by the application and is garbage collected [90018-202]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:678)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:477)
+	... 13 more
+2021-12-15 00:59:24 jdbc[7]: null
+org.h2.message.DbException: Незакрытое приложением соединение уничтожено сборщиком мусора
+The connection was not closed by the application and is garbage collected [90018-202]
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.message.DbException.get(DbException.java:188)
+	at org.h2.jdbc.JdbcConnection.closeOld(JdbcConnection.java:185)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:127)
+	at org.h2.util.JdbcUtils.getConnection(JdbcUtils.java:287)
+	at org.h2.server.web.WebServer.getConnection(WebServer.java:785)
+	at org.h2.server.web.WebApp.login(WebApp.java:1029)
+	at org.h2.server.web.WebApp.process(WebApp.java:226)
+	at org.h2.server.web.WebApp.processRequest(WebApp.java:176)
+	at org.h2.server.web.WebThread.process(WebThread.java:139)
+	at org.h2.server.web.WebThread.run(WebThread.java:94)
+	at java.lang.Thread.run(Unknown Source)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: Незакрытое приложением соединение уничтожено сборщиком мусора
+The connection was not closed by the application and is garbage collected [90018-202]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:678)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:477)
+	... 13 more

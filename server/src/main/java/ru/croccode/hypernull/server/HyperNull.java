@@ -21,6 +21,7 @@ import ru.croccode.hypernull.map.RandomMapRegistry;
 import ru.croccode.hypernull.match.Match;
 import ru.croccode.hypernull.match.MatchConfig;
 import ru.croccode.hypernull.match.MatchListener;
+import ru.croccode.hypernull.statistic.ConnectionDataBase;
 import ru.croccode.hypernull.util.Check;
 import ru.croccode.hypernull.util.Silent;
 
@@ -35,8 +36,9 @@ public class HyperNull implements Runnable, Closeable {
 
 	private final Server server;
 	private final String matchLogsFolder;
+	private static ConnectionDataBase connectionDataBase;
 
-	public HyperNull(Properties properties) throws IOException {
+	public HyperNull(Properties properties) throws IOException, ClassNotFoundException {
 		Check.notNull(properties);
 		mapRegistry = new RandomMapRegistry(); // TODO implement MapRegistry
 		// start server
@@ -44,6 +46,11 @@ public class HyperNull implements Runnable, Closeable {
 				properties.getProperty("server.port", "2021"));
 
 		matchLogsFolder = properties.getProperty("match.log.folder","./matchlogs/");
+		connectionDataBase = new ConnectionDataBase(Paths.get(matchLogsFolder),
+				properties.getProperty("match.database.folder",
+						"jdbc:h2:tcp://localhost/~\\Desktop\\Прога\\GIT\\hypernull\\database\\database"),
+				properties.getProperty("match.html.folder",
+						"./HTML/"));
 		System.out.println("Match logs folder was set to: " + matchLogsFolder);
 		this.server = new Server(serverPort);
 		System.out.println("Server started on port: " + serverPort);
@@ -63,6 +70,11 @@ public class HyperNull implements Runnable, Closeable {
 						mode == MatchMode.FRIENDLY ? MAX_FRIENDLY_BOTS : MAX_DEATHMATCH_BOTS);
 				if (!matchRequests.isEmpty()) {
 					runMatch(mode, matchRequests);
+					try {
+						connectionDataBase.run();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 			if (matchRequests.isEmpty()) {
@@ -118,7 +130,7 @@ public class HyperNull implements Runnable, Closeable {
 		server.close();
 	}
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		System.out.println("¤ ¤ ¤ HyperNull STARTING... ¤ ¤ ¤");
 		String configPath = args.length > 0
 				? args[0]
@@ -138,5 +150,6 @@ public class HyperNull implements Runnable, Closeable {
 		})));
 		System.out.println("¤ ¤ ¤ HyperNull READY ¤ ¤ ¤ ");
 		app.run();
+		connectionDataBase.close();
 	}
 }
